@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { FeaturedStock } from '../components/dashboard/FeaturedStock';
-import { StockList } from '../components/dashboard/StockList';
+import { StockCard } from '../components/StockCard';
+import { StockChart } from '../components/StockChart';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
-import type { Stock } from '../types';
 
 export function Dashboard() {
   const { stocks, loading, error } = useStocks();
@@ -11,19 +10,11 @@ export function Dashboard() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">Loading stocks...</div>
-      </div>
-    );
+    return <div>Loading stocks...</div>;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
-        {error}
-      </div>
-    );
+    return <div className="text-red-600">{error}</div>;
   }
 
   const handleStockClick = (stock: Stock) => {
@@ -32,8 +23,7 @@ export function Dashboard() {
   };
 
   const handleTradeSuccess = () => {
-    setIsTradeModalOpen(false);
-    setSelectedStock(null);
+    // In a real app, we would refresh the data here
   };
 
   return (
@@ -47,12 +37,23 @@ export function Dashboard() {
         </div>
       </div>
 
-      {stocks.length > 0 && <FeaturedStock stock={stocks[0]} />}
+      {/* Featured Stock Chart */}
+      {stocks.length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-lg font-medium mb-4">{stocks[0].symbol} - {stocks[0].name}</h2>
+          <StockChart stock={stocks[0]} />
+        </div>
+      )}
 
-      <StockList 
-        stocks={stocks} 
-        onStockClick={handleStockClick} 
-      />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {stocks.map((stock) => (
+          <StockCard
+            key={stock.symbol}
+            stock={stock}
+            onClick={() => handleStockClick(stock)}
+          />
+        ))}
+      </div>
 
       {selectedStock && (
         <TradeModal
