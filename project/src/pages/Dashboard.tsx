@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { StockCard } from '../components/StockCard';
-import { StockChart } from '../components/StockChart';
+import { MarketOverview } from '../components/dashboard/MarketOverview';
+import { StockTable } from '../components/dashboard/StockTable';
+import { StockDetails } from '../components/dashboard/StockDetails';
+import { SearchStocks } from '../components/SearchStocks';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
+import type { Stock } from '../types';
 
 export function Dashboard() {
   const { stocks, loading, error } = useStocks();
@@ -10,20 +13,32 @@ export function Dashboard() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
 
   if (loading) {
-    return <div>Loading stocks...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600">Loading stocks...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-600">{error}</div>;
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
+        {error}
+      </div>
+    );
   }
 
   const handleStockClick = (stock: Stock) => {
+    setSelectedStock(stock);
+  };
+
+  const handleTradeClick = (stock: Stock) => {
     setSelectedStock(stock);
     setIsTradeModalOpen(true);
   };
 
   const handleTradeSuccess = () => {
-    // In a real app, we would refresh the data here
+    setIsTradeModalOpen(false);
   };
 
   return (
@@ -32,27 +47,41 @@ export function Dashboard() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Market Overview</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Click on a stock to start trading
+            Search or click on a stock to view details
           </p>
         </div>
       </div>
 
-      {/* Featured Stock Chart */}
-      {stocks.length > 0 && (
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-medium mb-4">{stocks[0].symbol} - {stocks[0].name}</h2>
-          <StockChart stock={stocks[0]} />
-        </div>
-      )}
+      <div className="max-w-xl">
+        <SearchStocks stocks={stocks} onSelect={handleStockClick} />
+      </div>
+      
+      <MarketOverview stocks={stocks} />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {stocks.map((stock) => (
-          <StockCard
-            key={stock.symbol}
-            stock={stock}
-            onClick={() => handleStockClick(stock)}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <StockTable 
+            stocks={stocks}
+            onStockClick={handleStockClick}
           />
-        ))}
+        </div>
+        <div>
+          {selectedStock ? (
+            <div className="space-y-4">
+              <StockDetails stock={selectedStock} />
+              <button
+                onClick={() => handleTradeClick(selectedStock)}
+                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Trade {selectedStock.symbol}
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+              Select a stock to view details
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedStock && (

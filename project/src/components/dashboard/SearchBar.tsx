@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, TrendingUp, TrendingDown } from 'lucide-react';
-import type { Stock } from '../types';
+import type { Stock } from '../../types';
 
-interface SearchStocksProps {
-  onSelect: (stock: Stock) => void;
+interface SearchBarProps {
   stocks: Stock[];
+  onSelect: (stock: Stock) => void;
 }
 
-export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
+export function SearchBar({ stocks, onSelect }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -18,7 +18,7 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
     ? stocks.filter(stock => 
         stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
         stock.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 8)
+      ).slice(0, 8) // Limit to 8 results for better UX
     : [];
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative max-w-xl" ref={dropdownRef}>
       <div className="relative">
         <input
           ref={inputRef}
@@ -81,7 +81,8 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search stocks by symbol or name..."
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-base"
+          aria-label="Search stocks"
         />
         <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
         {query && (
@@ -93,6 +94,7 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
               inputRef.current?.focus();
             }}
             className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+            aria-label="Clear search"
           >
             <X className="h-5 w-5" />
           </button>
@@ -109,19 +111,24 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
                 index === selectedIndex ? 'bg-gray-50' : ''
               }`}
             >
-              <div>
-                <div className="font-medium">{stock.symbol}</div>
-                <div className="text-sm text-gray-600">{stock.name}</div>
-              </div>
-              <div className="text-right">
-                <div className="font-medium">${stock.price.toFixed(2)}</div>
-                <div className={`text-sm flex items-center justify-end ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stock.change >= 0 ? (
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 mr-1" />
-                  )}
-                  {stock.changePercent.toFixed(2)}%
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center">
+                  <span className="font-semibold text-gray-900">{stock.symbol}</span>
+                  <span className="mx-2 text-gray-300">|</span>
+                  <span className="text-sm text-gray-600 truncate">{stock.name}</span>
+                </div>
+                <div className="mt-1 flex items-center text-sm">
+                  <span className="font-medium">${stock.price.toFixed(2)}</span>
+                  <span className={`ml-2 flex items-center ${
+                    stock.change >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stock.change >= 0 ? (
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 mr-1" />
+                    )}
+                    {stock.changePercent.toFixed(2)}%
+                  </span>
                 </div>
               </div>
             </button>

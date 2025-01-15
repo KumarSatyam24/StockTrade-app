@@ -7,7 +7,6 @@ import { Login } from './pages/Login';
 import { Portfolio } from './pages/Portfolio';
 import { Settings } from './pages/Settings';
 import { Wishlist } from './pages/Wishlist';
-import { Analytics } from './pages/Analytics';
 
 export default function App() {
   return (
@@ -25,7 +24,6 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
