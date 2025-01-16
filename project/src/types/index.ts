@@ -10,6 +10,7 @@ export interface Stock {
   price: number;
   change: number;
   changePercent: number;
+  sector?: string;
   historicalData?: {
     date: string;
     price: number;

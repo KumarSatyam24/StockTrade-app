@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, TrendingUp, TrendingDown } from 'lucide-react';
-import type { Stock } from '../types';
+import type { IndianStock } from '../lib/stocks/types';
 
 interface SearchStocksProps {
-  onSelect: (stock: Stock) => void;
-  stocks: Stock[];
+  onSelect: (stock: IndianStock) => void;
+  stocks: IndianStock[];
 }
 
 export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
@@ -59,7 +59,7 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
     }
   };
 
-  const handleSelect = (stock: Stock) => {
+  const handleSelect = (stock: IndianStock) => {
     onSelect(stock);
     setQuery('');
     setIsOpen(false);
@@ -80,7 +80,7 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search stocks by symbol or name..."
+          placeholder="Search stocks by symbol or company name..."
           className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
         />
         <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
@@ -110,18 +110,24 @@ export function SearchStocks({ onSelect, stocks }: SearchStocksProps) {
               }`}
             >
               <div>
-                <div className="font-medium">{stock.symbol}</div>
-                <div className="text-sm text-gray-600">{stock.name}</div>
+                <div className="flex items-center">
+                  <span className="font-medium text-gray-900">{stock.symbol}</span>
+                  <span className="mx-2 text-gray-300">|</span>
+                  <span className="text-sm text-gray-600">{stock.name}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">{stock.sector}</div>
               </div>
               <div className="text-right">
-                <div className="font-medium">${stock.price.toFixed(2)}</div>
-                <div className={`text-sm flex items-center justify-end ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stock.change >= 0 ? (
+                <div className="font-medium">₹{stock.current_price.toFixed(2)}</div>
+                <div className={`text-sm flex items-center justify-end ${
+                  stock.day_change >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stock.day_change >= 0 ? (
                     <TrendingUp className="h-4 w-4 mr-1" />
                   ) : (
                     <TrendingDown className="h-4 w-4 mr-1" />
                   )}
-                  {stock.changePercent.toFixed(2)}%
+                  {stock.day_change_percent.toFixed(2)}%
                 </div>
               </div>
             </button>

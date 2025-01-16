@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWishlist } from '../hooks/useWishlist';
-import { SearchStocks } from '../components/SearchStocks';
+import { SearchBar } from '../components/dashboard/SearchBar';
 import { StockCard } from '../components/StockCard';
 import { Trash2 } from 'lucide-react';
 import { useStocks } from '../hooks/useStocks';
-import type { Stock } from '../types';
+import type { IndianStock } from '../lib/stocks/types';
 
 export function Wishlist() {
   const { user } = useAuth();
   const { stocks } = useStocks();
-  const { wishlist, loading, error, addToWishlist, removeFromWishlist } = useWishlist(user);
+  const { wishlist, loading, error, addItem, removeItem } = useWishlist(user);
   const [addError, setAddError] = useState<string | null>(null);
 
   if (loading) {
@@ -29,14 +29,21 @@ export function Wishlist() {
     );
   }
 
-  const handleAddToWishlist = async (stock: Stock) => {
+  const handleAddToWishlist = async (stock: IndianStock) => {
     try {
       setAddError(null);
-      await addToWishlist(stock.symbol, stock.price);
+      await addItem({
+        stock_symbol: stock.symbol,
+        target_price: stock.current_price
+      });
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Failed to add stock');
     }
   };
+
+  const wishlistStocks = stocks.filter(stock => 
+    wishlist.some(item => item.stock_symbol === stock.symbol)
+  );
 
   return (
     <div className="space-y-6">
@@ -50,7 +57,7 @@ export function Wishlist() {
       </div>
 
       <div className="max-w-xl">
-        <SearchStocks stocks={stocks} onSelect={handleAddToWishlist} />
+        <SearchBar stocks={stocks} onSelect={handleAddToWishlist} />
         {addError && (
           <div className="mt-2 text-sm text-red-600">
             {addError}
@@ -59,19 +66,11 @@ export function Wishlist() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {wishlist.map((item) => (
-          <div key={item.id} className="relative">
-            <StockCard
-              stock={{
-                symbol: item.stock_symbol,
-                name: "Loading...",
-                price: item.target_price,
-                change: 0,
-                changePercent: 0
-              }}
-            />
+        {wishlistStocks.map((stock) => (
+          <div key={stock.symbol} className="relative">
+            <StockCard stock={stock} />
             <button
-              onClick={() => removeFromWishlist(item.stock_symbol)}
+              onClick={() => removeItem(stock.symbol)}
               className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500"
             >
               <Trash2 className="h-5 w-5" />

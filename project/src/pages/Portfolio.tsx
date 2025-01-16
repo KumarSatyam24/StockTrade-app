@@ -1,7 +1,9 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePortfolio } from '../hooks/usePortfolio';
-import { PortfolioSummary } from '../components/Portfolio/PortfolioSummary';
+import { PortfolioHeader } from '../components/Portfolio/PortfolioHeader';
+import { PortfolioTable } from '../components/Portfolio/PortfolioTable';
+import { Search } from 'lucide-react';
 
 export function Portfolio() {
   const { user } = useAuth();
@@ -32,45 +34,50 @@ export function Portfolio() {
     );
   }
 
+  const totalInvestment = portfolio.reduce((sum, holding) => 
+    sum + (holding.quantity * holding.average_price), 0
+  );
+
+  const currentValue = portfolio.reduce((sum, holding) => 
+    sum + (holding.quantity * holding.current_price), 0
+  );
+
+  const totalProfitLoss = portfolio.reduce((sum, holding) => 
+    sum + holding.profit_loss, 0
+  );
+
+  // Simulate day's P&L (in a real app, this would come from the API)
+  const dayProfitLoss = portfolio.reduce((sum, holding) => 
+    sum + (holding.quantity * holding.current_price * (Math.random() * 0.04 - 0.02)), 0
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Your Portfolio</h1>
-      <PortfolioSummary portfolio={portfolio} />
-      
-      <div className="space-y-4">
-        {portfolio.map((holding) => {
-          // Ensure all required values have defaults
-          const quantity = holding.quantity || 0;
-          const averagePrice = holding.average_price || 0;
-          const currentPrice = holding.current_price || 0;
-          const profitLoss = holding.profit_loss || 0;
-          const profitLossPercentage = holding.profit_loss_percentage || 0;
-
-          return (
-            <div key={holding.id} className="bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{holding.stock_symbol}</h3>
-                    <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                      {quantity} shares @ ${averagePrice.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-medium">
-                      ${(quantity * currentPrice).toFixed(2)}
-                    </p>
-                    <p className={`text-sm ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {profitLoss >= 0 ? '+' : ''}{profitLoss.toFixed(2)} 
-                      ({profitLossPercentage.toFixed(2)}%)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-gray-900">Holdings (92)</h1>
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search"
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+          <select className="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option>All stocks</option>
+          </select>
+        </div>
       </div>
+
+      <PortfolioHeader
+        totalInvestment={totalInvestment}
+        currentValue={currentValue}
+        dayProfitLoss={dayProfitLoss}
+        totalProfitLoss={totalProfitLoss}
+      />
+
+      <PortfolioTable holdings={portfolio} />
     </div>
   );
 }

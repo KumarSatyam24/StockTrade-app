@@ -1,29 +1,33 @@
 import { useState, useEffect } from 'react';
-import type { Stock } from '../types';
-import { MOCK_STOCKS } from '../utils/mockData';
-import { useStockUpdates } from './useStockUpdates';
+import { getStocks, initializeStocksTable } from '../lib/stocks/stocksService';
+import type { IndianStock } from '../lib/stocks/types';
 
 export function useStocks() {
+  const [stocks, setStocks] = useState<IndianStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialStocks, setInitialStocks] = useState<Stock[]>([]);
 
   useEffect(() => {
-    try {
-      // Simulate API delay for more realistic behavior
-      const loadStocks = async () => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setInitialStocks(MOCK_STOCKS);
+    async function loadStocks() {
+      try {
+        // Initialize stocks table if empty
+        await initializeStocksTable();
+        const data = await getStocks();
+        setStocks(data);
+      } catch (err) {
+        setError('Failed to fetch stocks');
+        console.error(err);
+      } finally {
         setLoading(false);
-      };
-      loadStocks();
-    } catch (err) {
-      setError('Failed to fetch stocks');
-      setLoading(false);
+      }
     }
-  }, []);
 
-  const stocks = useStockUpdates(initialStocks);
+    loadStocks();
+
+    // Refresh every minute
+    const interval = setInterval(loadStocks, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return { stocks, loading, error };
 }

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { MarketOverview } from '../components/dashboard/MarketOverview';
 import { StockTable } from '../components/dashboard/StockTable';
 import { StockDetails } from '../components/dashboard/StockDetails';
-import { SearchStocks } from '../components/SearchStocks';
+import { SearchBar } from '../components/dashboard/SearchBar';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
-import type { Stock } from '../types';
+import type { IndianStock } from '../lib/stocks/types';
 
 export function Dashboard() {
   const { stocks, loading, error } = useStocks();
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [selectedStock, setSelectedStock] = useState<IndianStock | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
 
   if (loading) {
@@ -28,11 +28,11 @@ export function Dashboard() {
     );
   }
 
-  const handleStockClick = (stock: Stock) => {
+  const handleStockClick = (stock: IndianStock) => {
     setSelectedStock(stock);
   };
 
-  const handleTradeClick = (stock: Stock) => {
+  const handleTradeClick = (stock: IndianStock) => {
     setSelectedStock(stock);
     setIsTradeModalOpen(true);
   };
@@ -53,7 +53,7 @@ export function Dashboard() {
       </div>
 
       <div className="max-w-xl">
-        <SearchStocks stocks={stocks} onSelect={handleStockClick} />
+        <SearchBar stocks={stocks} onSelect={handleStockClick} />
       </div>
       
       <MarketOverview stocks={stocks} />
