@@ -1,10 +1,11 @@
 import { supabase } from '../lib/supabase';
-import type { User, Stock } from '../types';
+import type { User } from '../types';
+import type { IndianStock } from '../lib/stocks/types';
 import { ensureProfile } from './profileUtils';
 
 interface TradeParams {
   user: User;
-  stock: Stock;
+  stock: IndianStock;
   quantity: number;
   type: 'BUY' | 'SELL';
 }
@@ -13,7 +14,16 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
   // Ensure profile exists before proceeding
   await ensureProfile(user);
 
-  const total = quantity * stock.price;
+  // Ensure we have valid numbers
+  const price = stock.current_price || 0;
+  if (price <= 0) {
+    throw new Error('Invalid stock price');
+  }
+
+  const total = quantity * price;
+  if (total <= 0) {
+    throw new Error('Invalid trade amount');
+  }
 
   // Start by getting the current portfolio holding
   const { data: portfolioData } = await supabase
@@ -32,7 +42,7 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
       stock_symbol: stock.symbol,
       type,
       quantity,
-      price: stock.price,
+      price,
       total
     });
 
@@ -52,9 +62,16 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
         .delete()
         .eq('id', portfolio.id);
     } else {
+      const newAveragePrice = type === 'BUY'
+        ? ((portfolio.quantity * portfolio.average_price) + (quantity * price)) / newQuantity
+        : portfolio.average_price;
+
       await supabase
         .from('portfolios')
-        .update({ quantity: newQuantity })
+        .update({ 
+          quantity: newQuantity,
+          average_price: newAveragePrice
+        })
         .eq('id', portfolio.id);
     }
   } else if (type === 'BUY') {
@@ -64,7 +81,7 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
         user_id: user.id,
         stock_symbol: stock.symbol,
         quantity,
-        average_price: stock.price
+        average_price: price
       });
   } else {
     throw new Error('Cannot sell stock you don\'t own');

@@ -5,9 +5,14 @@ import type { IndianStock } from '../../lib/stocks/types';
 interface SearchBarProps {
   stocks: IndianStock[];
   onSelect: (stock: IndianStock) => void;
+  placeholder?: string;
 }
 
-export function SearchBar({ stocks, onSelect }: SearchBarProps) {
+export function SearchBar({ 
+  stocks, 
+  onSelect,
+  placeholder = "Search by symbol, company name, or sector..."
+}: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -18,8 +23,18 @@ export function SearchBar({ stocks, onSelect }: SearchBarProps) {
     ? stocks.filter(stock => 
         stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
         stock.name.toLowerCase().includes(query.toLowerCase()) ||
-        stock.sector.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 8)
+        (stock.sector && stock.sector.toLowerCase().includes(query.toLowerCase()))
+      )
+      .sort((a, b) => {
+        // Prioritize exact symbol matches
+        if (a.symbol.toLowerCase() === query.toLowerCase()) return -1;
+        if (b.symbol.toLowerCase() === query.toLowerCase()) return 1;
+        // Then prioritize symbol starts with
+        if (a.symbol.toLowerCase().startsWith(query.toLowerCase())) return -1;
+        if (b.symbol.toLowerCase().startsWith(query.toLowerCase())) return 1;
+        return 0;
+      })
+      .slice(0, 8)
     : [];
 
   useEffect(() => {
@@ -68,7 +83,7 @@ export function SearchBar({ stocks, onSelect }: SearchBarProps) {
   };
 
   return (
-    <div className="relative max-w-xl" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <div className="relative">
         <input
           ref={inputRef}
@@ -81,7 +96,7 @@ export function SearchBar({ stocks, onSelect }: SearchBarProps) {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search by symbol, company name, or sector..."
+          placeholder={placeholder}
           className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
         />
         <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />

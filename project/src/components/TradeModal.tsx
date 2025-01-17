@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import type { Stock } from '../types';
+import type { IndianStock } from '../lib/stocks/types';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { executeTrade } from '../utils/tradeUtils';
 
 interface TradeModalProps {
-  stock: Stock;
+  stock: IndianStock;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -12,12 +13,17 @@ interface TradeModalProps {
 
 export function TradeModal({ stock, isOpen, onClose, onSuccess }: TradeModalProps) {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState('1');
   const [type, setType] = useState<'BUY' | 'SELL'>('BUY');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen || !user) return null;
+
+  // Ensure we have valid numbers
+  const currentPrice = stock.current_price || 0;
+  const totalValue = (parseFloat(quantity) || 0) * currentPrice;
 
   const handleTrade = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,17 +37,20 @@ export function TradeModal({ stock, isOpen, onClose, onSuccess }: TradeModalProp
         quantity: parseFloat(quantity),
         type
       });
+      showNotification('success', `Successfully ${type.toLowerCase()}ed ${quantity} shares of ${stock.symbol}`);
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showNotification('error', errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 className="text-xl font-semibold mb-4">Trade {stock.symbol}</h2>
         
@@ -83,11 +92,11 @@ export function TradeModal({ stock, isOpen, onClose, onSuccess }: TradeModalProp
           <div className="bg-gray-50 p-3 rounded">
             <div className="flex justify-between text-sm">
               <span>Price per share:</span>
-              <span>${stock.price.toFixed(2)}</span>
+              <span>₹{currentPrice.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-semibold mt-1">
               <span>Total:</span>
-              <span>${(parseFloat(quantity) * stock.price).toFixed(2)}</span>
+              <span>₹{totalValue.toFixed(2)}</span>
             </div>
           </div>
 
