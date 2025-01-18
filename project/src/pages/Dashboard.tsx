@@ -3,14 +3,18 @@ import { MarketOverview } from '../components/dashboard/MarketOverview';
 import { StockTable } from '../components/dashboard/StockTable';
 import { StockDetails } from '../components/dashboard/StockDetails';
 import { SearchBar } from '../components/dashboard/SearchBar';
+import { StockList } from '../components/dashboard/StockList';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
 import type { IndianStock } from '../lib/stocks/types';
 
 export function Dashboard() {
   const { stocks, loading, error } = useStocks();
+  // Add debug logging
+  console.log('[Dashboard] Total stocks:', stocks.length, stocks);
   const [selectedStock, setSelectedStock] = useState<IndianStock | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   if (loading) {
     return (
@@ -47,27 +51,56 @@ export function Dashboard() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Market Overview</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Search or click on a stock to view details
+            Track and trade stocks in real-time
           </p>
+        </div>
+        <div className="mt-4 md:mt-0">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1.5 rounded ${
+                viewMode === 'grid' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Grid View
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 rounded ${
+                viewMode === 'table' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Table View
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="max-w-xl">
-        <SearchBar stocks={stocks} onSelect={handleStockClick} />
+        <SearchBar 
+          stocks={stocks} 
+          onSelect={handleStockClick}
+          placeholder="Search by company name, symbol, or sector..."
+        />
       </div>
       
       <MarketOverview stocks={stocks} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <StockTable 
-            stocks={stocks}
-            onStockClick={handleStockClick}
-          />
+          {viewMode === 'grid' ? (
+            <StockList stocks={stocks} onStockClick={handleStockClick} />
+          ) : (
+            <StockTable stocks={stocks} onStockClick={handleStockClick} />
+          )}
         </div>
         <div>
           {selectedStock ? (
-            <div className="space-y-4">
+            <div className="space-y-4 sticky top-6">
               <StockDetails stock={selectedStock} />
               <button
                 onClick={() => handleTradeClick(selectedStock)}

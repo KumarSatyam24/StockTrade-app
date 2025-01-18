@@ -1,8 +1,17 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { signOut } from '../services/auth';
 
 export function Settings() {
   const { user } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div>
@@ -26,6 +35,15 @@ export function Settings() {
             </div>
           </dl>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <button
+          onClick={handleSignOut}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );

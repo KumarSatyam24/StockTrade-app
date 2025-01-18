@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getStocks, initializeStocksTable } from '../lib/stocks/stocksService';
+import { getStocks } from '../services/stocks';
 import type { IndianStock } from '../lib/stocks/types';
 
 export function useStocks() {
@@ -10,23 +10,20 @@ export function useStocks() {
   useEffect(() => {
     async function loadStocks() {
       try {
-        // Initialize stocks table if empty
-        await initializeStocksTable();
+        setLoading(true);
         const data = await getStocks();
+        console.log('[useStocks] Fetched stocks:', data.length); // Debug log
         setStocks(data);
+        setError(null);
       } catch (err) {
+        console.error('Failed to fetch stocks:', err);
         setError('Failed to fetch stocks');
-        console.error(err);
       } finally {
         setLoading(false);
       }
     }
 
     loadStocks();
-
-    // Refresh every minute
-    const interval = setInterval(loadStocks, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   return { stocks, loading, error };

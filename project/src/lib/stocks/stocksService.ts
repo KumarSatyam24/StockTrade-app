@@ -12,14 +12,19 @@ export async function initializeStocksTable() {
 
     // Only initialize if no stocks exist
     if (!existingStocks?.length) {
-      const { error } = await supabase
-        .from('stocks')
-        .upsert(NIFTY50_STOCKS, { 
-          onConflict: 'symbol',
-          ignoreDuplicates: true 
-        });
+      // Insert stocks in batches to avoid payload size limits
+      const batchSize = 10;
+      for (let i = 0; i < NIFTY50_STOCKS.length; i += batchSize) {
+        const batch = NIFTY50_STOCKS.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from('stocks')
+          .upsert(batch, { 
+            onConflict: 'symbol',
+            ignoreDuplicates: true 
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
     }
   } catch (error) {
     console.error('Error initializing stocks:', error);
@@ -35,7 +40,20 @@ export async function getStocks(): Promise<IndianStock[]> {
       .order('symbol');
 
     if (error) throw error;
-    return data || [];
+    
+    // Ensure we have stocks data, if not initialize and fetch again
+    if (!data?.length) {
+      await initializeStocksTable();
+      const { data: refreshedData, error: refreshError } = await supabase
+        .from('stocks')
+        .select('*')
+        .order('symbol');
+        
+      if (refreshError) throw refreshError;
+      return refreshedData || [];
+    }
+
+    return data;
   } catch (error) {
     console.error('Error fetching stocks:', error);
     throw error;

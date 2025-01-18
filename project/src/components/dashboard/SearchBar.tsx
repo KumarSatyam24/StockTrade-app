@@ -13,13 +13,15 @@ export function SearchBar({
   onSelect,
   placeholder = "Search by symbol, company name, or sector..."
 }: SearchBarProps) {
+  // Add debug logging
+  console.log('[SearchBar] Received stocks:', stocks.length, stocks);
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const filteredStocks = query
+  /*const filteredStocks = query
     ? stocks.filter(stock => 
         stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
         stock.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -35,7 +37,33 @@ export function SearchBar({
         return 0;
       })
       .slice(0, 8)
+    : [];*/
+
+  const filteredStocks = query
+    ? stocks.filter(stock => {
+        const matches = stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
+          stock.name.toLowerCase().includes(query.toLowerCase()) ||
+          (stock.sector && stock.sector.toLowerCase().includes(query.toLowerCase()));
+        
+        // Debug individual matches
+        if (matches) {
+          console.log('[SearchBar] Match found:', stock.symbol);
+        }
+        
+        return matches;
+      })
+      .sort((a, b) => {
+        if (a.symbol.toLowerCase() === query.toLowerCase()) return -1;
+        if (b.symbol.toLowerCase() === query.toLowerCase()) return 1;
+        if (a.symbol.toLowerCase().startsWith(query.toLowerCase())) return -1;
+        if (b.symbol.toLowerCase().startsWith(query.toLowerCase())) return 1;
+        return 0;
+      })
+      .slice(0, 8)
     : [];
+  // Debug filtered results
+  console.log('[SearchBar] Filtered stocks:', filteredStocks.length, filteredStocks);
+  // ... rest of the component remains the same
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
