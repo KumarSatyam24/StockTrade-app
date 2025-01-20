@@ -6,12 +6,12 @@ import { SearchBar } from '../components/dashboard/SearchBar';
 import { StockList } from '../components/dashboard/StockList';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
+import { useMarketUpdates } from '../hooks/useMarketUpdates';
 import type { IndianStock } from '../lib/stocks/types';
 
 export function Dashboard() {
-  const { stocks, loading, error } = useStocks();
-  // Add debug logging
-  console.log('[Dashboard] Total stocks:', stocks.length, stocks);
+  const { stocks: initialStocks, loading, error } = useStocks();
+  const stocks = useMarketUpdates(initialStocks);
   const [selectedStock, setSelectedStock] = useState<IndianStock | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');

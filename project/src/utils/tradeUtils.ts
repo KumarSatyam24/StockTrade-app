@@ -14,25 +14,44 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
   // Ensure profile exists before proceeding
   await ensureProfile(user);
 
-  // Ensure we have valid numbers
-  const price = stock.current_price || 0;
+  // Validate inputs and convert to numbers
+  const tradeQuantity = Number(quantity);
+  if (tradeQuantity <= 0) {
+    throw new Error('Quantity must be greater than 0');
+  }
+
+  const price = Number(stock.current_price);
   if (price <= 0) {
     throw new Error('Invalid stock price');
   }
 
-  const total = quantity * price;
+  const total = tradeQuantity * price;
   if (total <= 0) {
     throw new Error('Invalid trade amount');
   }
 
-  // Start by getting the current portfolio holding
-  const { data: portfolioData } = await supabase
+  // Get current portfolio holding
+  const { data: portfolioData, error: portfolioError } = await supabase
     .from('portfolios')
     .select('*')
     .eq('user_id', user.id)
-    .eq('stock_symbol', stock.symbol);
+    .eq('stock_symbol', stock.symbol)
+    .single();
 
-  const portfolio = portfolioData?.[0];
+  if (portfolioError && portfolioError.code !== 'PGRST116') {
+    throw portfolioError;
+  }
+
+  // Validate sell order with proper number comparison
+  if (type === 'SELL') {
+    if (!portfolioData) {
+      throw new Error('Cannot sell stock you don\'t own');
+    }
+    const currentQuantity = Number(portfolioData.quantity);
+    if (currentQuantity < tradeQuantity) {
+      throw new Error('Insufficient shares to sell');
+    }
+  }
 
   // Record the transaction
   const { error: tradeError } = await supabase
@@ -41,7 +60,7 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
       user_id: user.id,
       stock_symbol: stock.symbol,
       type,
-      quantity,
+      quantity: tradeQuantity,
       price,
       total
     });
@@ -49,41 +68,51 @@ export async function executeTrade({ user, stock, quantity, type }: TradeParams)
   if (tradeError) throw tradeError;
 
   // Update portfolio
-  if (portfolio) {
+  if (portfolioData) {
+    const currentQuantity = Number(portfolioData.quantity);
     const newQuantity = type === 'BUY' 
-      ? portfolio.quantity + quantity
-      : portfolio.quantity - quantity;
-
-    if (newQuantity < 0) throw new Error('Insufficient shares');
+      ? currentQuantity + tradeQuantity
+      : currentQuantity - tradeQuantity;
 
     if (newQuantity === 0) {
-      await supabase
+      // Delete the portfolio entry if quantity becomes zero
+      const { error: deleteError } = await supabase
         .from('portfolios')
         .delete()
-        .eq('id', portfolio.id);
-    } else {
-      const newAveragePrice = type === 'BUY'
-        ? ((portfolio.quantity * portfolio.average_price) + (quantity * price)) / newQuantity
-        : portfolio.average_price;
+        .eq('id', portfolioData.id);
 
-      await supabase
+      if (deleteError) throw deleteError;
+    } else {
+      // Update existing portfolio entry
+      const currentAvgPrice = Number(portfolioData.average_price);
+      const newAveragePrice = type === 'BUY'
+        ? ((currentQuantity * currentAvgPrice) + (tradeQuantity * price)) / newQuantity
+        : currentAvgPrice;
+
+      const { error: updateError } = await supabase
         .from('portfolios')
         .update({ 
           quantity: newQuantity,
-          average_price: newAveragePrice
+          average_price: newAveragePrice,
+          current_price: price
         })
-        .eq('id', portfolio.id);
+        .eq('id', portfolioData.id);
+
+      if (updateError) throw updateError;
     }
   } else if (type === 'BUY') {
-    await supabase
+    // Create new portfolio entry for buy orders
+    const { error: insertError } = await supabase
       .from('portfolios')
       .insert({
         user_id: user.id,
         stock_symbol: stock.symbol,
-        quantity,
-        average_price: price
+        quantity: tradeQuantity,
+        average_price: price,
+        current_price: price,
+        previous_day_price: price
       });
-  } else {
-    throw new Error('Cannot sell stock you don\'t own');
+
+    if (insertError) throw insertError;
   }
 }

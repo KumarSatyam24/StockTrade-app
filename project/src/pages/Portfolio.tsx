@@ -1,13 +1,15 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePortfolio } from '../hooks/usePortfolio';
+import { usePortfolioUpdates } from '../hooks/usePortfolioUpdates';
 import { PortfolioHeader } from '../components/Portfolio/PortfolioHeader';
 import { PortfolioTable } from '../components/Portfolio/PortfolioTable';
 import { Search } from 'lucide-react';
 
 export function Portfolio() {
   const { user } = useAuth();
-  const { portfolio, loading, error } = usePortfolio(user);
+  const { portfolio: initialPortfolio, loading, error } = usePortfolio(user);
+  const portfolio = usePortfolioUpdates(initialPortfolio);
 
   if (loading) {
     return (
@@ -28,7 +30,7 @@ export function Portfolio() {
   if (!portfolio || portfolio.length === 0) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Your Portfolio</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Your Portfolio ({portfolio.length})</h1>
         <p className="text-gray-500">You don't have any stocks in your portfolio yet.</p>
       </div>
     );
@@ -42,19 +44,17 @@ export function Portfolio() {
     sum + (holding.quantity * holding.current_price), 0
   );
 
-  const totalProfitLoss = portfolio.reduce((sum, holding) => 
-    sum + holding.profit_loss, 0
-  );
-
-  // Simulate day's P&L (in a real app, this would come from the API)
+  const totalProfitLoss = currentValue - totalInvestment;
   const dayProfitLoss = portfolio.reduce((sum, holding) => 
-    sum + (holding.quantity * holding.current_price * (Math.random() * 0.04 - 0.02)), 0
+    sum + holding.profit_loss, 0
   );
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Holdings (92)</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Holdings ({portfolio.length})
+        </h1>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <input
