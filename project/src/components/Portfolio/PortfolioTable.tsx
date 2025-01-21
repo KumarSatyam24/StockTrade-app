@@ -30,6 +30,7 @@ export function PortfolioTable({ holdings }: PortfolioTableProps) {
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">LTP</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Day's P/L</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Day %</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Net P/L</th>
               <th className="w-8"></th>
             </tr>

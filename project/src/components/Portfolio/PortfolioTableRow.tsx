@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, TrendingUp, TrendingDown } from 'lucide-react';
 import { LastTradedPrice } from '../market/LastTradedPrice';
 import type { Portfolio } from '../../types';
 import type { MarketTick } from '../../types/market';
@@ -12,7 +12,10 @@ interface PortfolioTableRowProps {
 export function PortfolioTableRow({ holding, marketData }: PortfolioTableRowProps) {
   const currentPrice = marketData?.price || holding.current_price;
   const dayPL = (currentPrice - holding.previous_day_price) * holding.quantity;
+  const dayChangePercent = ((currentPrice - holding.previous_day_price) / holding.previous_day_price) * 100;
   const netPL = (currentPrice - holding.average_price) * holding.quantity;
+  
+  const Icon = dayChangePercent >= 0 ? TrendingUp : TrendingDown;
   
   return (
     <tr className="hover:bg-gray-50">
@@ -34,6 +37,12 @@ export function PortfolioTableRow({ holding, marketData }: PortfolioTableRowProp
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
         <div className={`font-medium ${dayPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
           ₹{Math.abs(dayPL).toFixed(2)}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+        <div className={`flex items-center justify-end font-medium ${dayChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <Icon className="h-4 w-4 mr-1" />
+          {dayChangePercent >= 0 ? '+' : ''}{dayChangePercent.toFixed(2)}%
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
