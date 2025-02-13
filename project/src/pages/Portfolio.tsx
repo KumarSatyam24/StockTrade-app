@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { usePortfolioUpdates } from '../hooks/usePortfolioUpdates';
@@ -8,8 +8,9 @@ import { Search } from 'lucide-react';
 
 export function Portfolio() {
   const { user } = useAuth();
-  const { portfolio: initialPortfolio, loading, error } = usePortfolio(user);
+  const { portfolio: initialPortfolio, loading, error, refetch } = usePortfolio(user);
   const portfolio = usePortfolioUpdates(initialPortfolio);
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (loading) {
     return (
@@ -27,27 +28,20 @@ export function Portfolio() {
     );
   }
 
-  if (!portfolio || portfolio.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Your Portfolio ({portfolio.length})</h1>
-        <p className="text-gray-500">You don't have any stocks in your portfolio yet.</p>
-      </div>
-    );
-  }
+  // Filter portfolio based on search query
+  const filteredPortfolio = portfolio.filter(holding =>
+    holding.stock_symbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const totalInvestment = portfolio.reduce((sum, holding) => 
+  const totalInvestment = filteredPortfolio.reduce((sum, holding) => 
     sum + (holding.quantity * holding.average_price), 0
   );
 
-  const currentValue = portfolio.reduce((sum, holding) => 
+  const currentValue = filteredPortfolio.reduce((sum, holding) => 
     sum + (holding.quantity * holding.current_price), 0
   );
 
   const totalProfitLoss = currentValue - totalInvestment;
-  const dayProfitLoss = portfolio.reduce((sum, holding) => 
-    sum + holding.profit_loss, 0
-  );
 
   return (
     <div className="space-y-6">
@@ -59,25 +53,23 @@ export function Portfolio() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search stocks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
-          <select className="border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>All stocks</option>
-          </select>
         </div>
       </div>
 
       <PortfolioHeader
         totalInvestment={totalInvestment}
         currentValue={currentValue}
-        dayProfitLoss={dayProfitLoss}
         totalProfitLoss={totalProfitLoss}
       />
 
-      <PortfolioTable holdings={portfolio} />
+      <PortfolioTable holdings={filteredPortfolio} onTradeSuccess={refetch} />
     </div>
   );
 }

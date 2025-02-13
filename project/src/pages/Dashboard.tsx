@@ -6,17 +6,26 @@ import { SearchBar } from '../components/dashboard/SearchBar';
 import { StockList } from '../components/dashboard/StockList';
 import { TradeModal } from '../components/TradeModal';
 import { useStocks } from '../hooks/useStocks';
-import { useMarketUpdates } from '../hooks/useMarketUpdates';
+import { useMarket } from '../contexts/MarketContext';
 import type { IndianStock } from '../lib/stocks/types';
 
 export function Dashboard() {
   const { stocks: initialStocks, loading, error } = useStocks();
-  const stocks = useMarketUpdates(initialStocks);
+  const { marketData, isLoading } = useMarket();
   const [selectedStock, setSelectedStock] = useState<IndianStock | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  if (loading) {
+  // Update stocks with latest market data
+  const stocks = initialStocks.map(stock => ({
+    ...stock,
+    current_price: marketData[stock.symbol]?.price || stock.current_price,
+    day_change: marketData[stock.symbol]?.change || stock.day_change,
+    day_change_percent: marketData[stock.symbol]?.changePercent || stock.day_change_percent,
+    volume: marketData[stock.symbol]?.volume || stock.volume
+  }));
+
+  if (loading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-gray-600">Loading stocks...</div>

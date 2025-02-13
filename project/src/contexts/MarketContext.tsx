@@ -1,28 +1,36 @@
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { MarketData } from '../types/market';
 
 const POLLING_INTERVAL = 3000; // 3 seconds
 
-export function useMarketData(symbols: string[]) {
-  const [marketData, setMarketData] = useState<MarketData>({});
-  
-  useEffect(() => {
-    if (!symbols.length) return;
+interface MarketContextType {
+  marketData: MarketData;
+  isLoading: boolean;
+}
 
-    // Initial fetch
-    fetchMarketData();
+const MarketContext = createContext<MarketContextType>({
+  marketData: {},
+  isLoading: true
+});
+
+export function MarketProvider({ children }: { children: React.ReactNode }) {
+  const [marketData, setMarketData] = useState<MarketData>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initial fetch of all stocks
+    fetchAllStocks();
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('market-updates')
+      .channel('market-data')
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'stocks',
-          filter: `symbol=in.(${symbols.join(',')})`,
+          table: 'stocks'
         },
         (payload) => {
           setMarketData(prev => ({
@@ -39,11 +47,10 @@ export function useMarketData(symbols: string[]) {
       )
       .subscribe();
 
-    async function fetchMarketData() {
+    async function fetchAllStocks() {
       const { data, error } = await supabase
         .from('stocks')
-        .select('symbol, current_price, day_change, day_change_percent, volume')
-        .in('symbol', symbols);
+        .select('symbol, current_price, day_change, day_change_percent, volume');
 
       if (!error && data) {
         const newData = data.reduce((acc, stock) => ({
@@ -57,17 +64,26 @@ export function useMarketData(symbols: string[]) {
           }
         }), {});
         setMarketData(newData);
+        setIsLoading(false);
       }
     }
 
     // Polling fallback
-    const pollInterval = setInterval(fetchMarketData, POLLING_INTERVAL);
+    const pollInterval = setInterval(fetchAllStocks, POLLING_INTERVAL);
 
     return () => {
       clearInterval(pollInterval);
       channel.unsubscribe();
     };
-  }, [symbols]);
+  }, []);
 
-  return marketData;
+  return (
+    <MarketContext.Provider value={{ marketData, isLoading }}>
+      {children}
+    </MarketContext.Provider>
+  );
+}
+
+export function useMarket() {
+  return useContext(MarketContext);
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Portfolio } from '../types';
 import type { User } from '../types';
@@ -8,30 +8,31 @@ export function usePortfolio(user: User | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchPortfolio = useCallback(async () => {
     if (!user) return;
 
-    async function loadPortfolio() {
-      try {
-        const { data, error: supabaseError } = await supabase
-          .from('portfolios')
-          .select('*')
-          .eq('user_id', user.id);
+    try {
+      setLoading(true);
+      const { data, error: supabaseError } = await supabase
+        .from('portfolios')
+        .select('*')
+        .eq('user_id', user.id);
 
-        if (supabaseError) throw supabaseError;
-        
-        // Always set portfolio to an array, even if empty
-        setPortfolio(data || []);
-      } catch (err) {
-        console.error('Error loading portfolio:', err);
-        setError('Failed to load portfolio');
-      } finally {
-        setLoading(false);
-      }
+      if (supabaseError) throw supabaseError;
+      
+      setPortfolio(data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading portfolio:', err);
+      setError('Failed to load portfolio');
+    } finally {
+      setLoading(false);
     }
-
-    loadPortfolio();
   }, [user]);
 
-  return { portfolio, loading, error };
+  useEffect(() => {
+    fetchPortfolio();
+  }, [fetchPortfolio]);
+
+  return { portfolio, loading, error, refetch: fetchPortfolio };
 }

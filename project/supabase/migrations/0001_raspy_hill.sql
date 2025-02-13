@@ -44,7 +44,7 @@ CREATE TABLE portfolios (
   user_id uuid REFERENCES profiles ON DELETE CASCADE NOT NULL,
   stock_symbol text NOT NULL,
   quantity numeric NOT NULL CHECK (quantity >= 0),
-  average_price numeric NOT NULL CHECK (average_price > 0),
+  average_price numeric NOT NULL ,
   created_at timestamptz DEFAULT now(),
   UNIQUE(user_id, stock_symbol)
 );

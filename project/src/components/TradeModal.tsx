@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { IndianStock } from '../lib/stocks/types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -9,15 +9,21 @@ interface TradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultType?: 'BUY' | 'SELL';
 }
 
-export function TradeModal({ stock, isOpen, onClose, onSuccess }: TradeModalProps) {
+export function TradeModal({ stock, isOpen, onClose, onSuccess, defaultType = 'BUY' }: TradeModalProps) {
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState('1');
-  const [type, setType] = useState<'BUY' | 'SELL'>('BUY');
+  const [type, setType] = useState<'BUY' | 'SELL'>(defaultType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Update type when defaultType changes
+  useEffect(() => {
+    setType(defaultType);
+  }, [defaultType]);
 
   if (!isOpen || !user) return null;
 

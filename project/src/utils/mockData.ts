@@ -1,1 +1,0 @@
-export { MOCK_STOCKS } from './stockData';
