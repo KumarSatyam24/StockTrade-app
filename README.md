@@ -115,9 +115,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/) for the styling system
 - [Lucide React](https://lucide.dev/) for the beautiful icons
 - [React](https://reactjs.org/) for the frontend framework
-
-## Contact 📧
-
-Your Name - [@satyam Kumar](https://twitter.com/yourusername)
-
-Project Link: [https://github.com/yourusername/stocktrade](https://github.com/yourusername/stocktrade)
