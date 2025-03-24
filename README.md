@@ -130,3 +130,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/) for the styling system
 - [Lucide](https://lucide.dev/) for the beautiful icons
 - [Vite](https://vitejs.dev/) for the build tooling
+
+## Acknowledgments
+
+- [Supabase](https://supabase.io/) for the backend infrastructure
+- [Tailwind CSS](https://tailwindcss.com/) for the styling system
+- [Lucide](https://lucide.dev/) for the beautiful icons
+- [Vite](https://vitejs.dev/) for the build tooling
