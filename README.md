@@ -131,4 +131,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Lucide](https://lucide.dev/) for the beautiful icons
 - [Vite](https://vitejs.dev/) for the build tooling
 
-Website Link: [LINK](www.stocktrade.satyamk.com)
+Website Link: www.stocktrade.satyamk.com
