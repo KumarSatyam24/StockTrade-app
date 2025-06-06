@@ -1,6 +1,7 @@
 # StockTrade Platform
 
 A real-time stock trading platform built with React, TypeScript, and Supabase. Monitor stocks, manage your portfolio, and execute trades with ease.
+link:[ https://kaleidoscopiccuchuflief6438.netlify.app/login](https://kaleidoscopic-cuchufli-ef6438.netlify.app/login)
 
 ![StockTrade Platform](https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=1200)
 
